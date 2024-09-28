@@ -49,7 +49,7 @@
 
 ## プロジェクト名
 
-山中家のFinancial Data Base
+家計簿として使うFinancial Data Base
 
 <!-- プロジェクトについて -->
 
