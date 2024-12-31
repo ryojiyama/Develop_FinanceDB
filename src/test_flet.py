@@ -18,7 +18,7 @@ def main(page: ft.Page):
     # 画面要素の配置
     page.add(
         ft.Text("家計簿アプリケーション テスト", size=30, weight=ft.FontWeight.BOLD),
-        ft.ElevatedButton(text="テストボタン", on_click=button_clicked),
+        ft.ElevatedButton(text="TestButton", on_click=button_clicked),
         display_text
     )
 
