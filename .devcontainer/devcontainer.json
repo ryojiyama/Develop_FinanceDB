@@ -1,4 +1,4 @@
-{
+ {
     "name": "Finance DB",
     "dockerComposeFile": ["../Docker/docker-compose.yml"],
     "service": "web",
