@@ -93,3 +93,31 @@ FROM transactions t
 JOIN categories c
     ON t.category_id = c.id
 ORDER BY t.transaction_date;
+
+SQL Table	CSV Table
+transaction_date	山中　亮司　様
+description	5302-32**~
+amount	空白
+Memo	空白
+SQLとCSVのテーブル構造の対照表です。まずはCSVのカラムタイトルを変更する処理をPythonで作成してください。
+# 条件
+1. ~/Dropbox/FinanceData/
+├── bank_statements/    # 銀行取引CSVファイル
+├── card_statements/    # カード取引CSVファイル
+└── processed/         # 処理済みファイル
+のcard_statemnetsに入っているCSVファイルを選択
+2. csv Tableの列が元のカラム名です。これを"SQL Table"のカラム名に変更する。
+
+　
+        0: 'transaction_date',  # 1列目
+        1: 'description',       # 2列目
+        2: 'amount',           # 3列目
+        6: 'memo'              # 7列目
+に下記の項目を加えたいです。
+3: inst_total
+4: inst_num
+5. inst_amount
+
+
+transaction_date	description	amount	inst_total	inst_num	inst_amount	memo
+2024-01-10	家電量販店	120000	120000.0	12.0	10000.0	テスト用
