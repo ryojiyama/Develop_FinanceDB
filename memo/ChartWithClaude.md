@@ -121,3 +121,166 @@ SQLとCSVのテーブル構造の対照表です。まずはCSVのカラムタ�
 
 transaction_date	description	amount	inst_total	inst_num	inst_amount	memo
 2024-01-10	家電量販店	120000	120000.0	12.0	10000.0	テスト用
+
+
+def clean_and_validate_data(df: pd.DataFrame, source_filename: str, output_dir: Path) -> pd.DataFrame:
+    """
+    データのクリーニングとバリデーションを行う
+    Args:
+        df (pd.DataFrame): 元のデータフレーム
+    Returns:
+        pd.DataFrame: クリーニング済みのデータフレーム
+    """
+    logger.info(f"Starting validation with {len(df)} records")
+    logger.info("Initial data sample:")
+    logger.info(f"\n{df.head()}")
+
+    # 実行日を取得
+    execution_date = pd.Timestamp.now().date()
+
+    # 注意書き行を除去（transaction_dateが空白または日付以外、かつamountが空白または数値以外）
+    def is_valid_row(row):
+        try:
+            # 日付の検証
+            if pd.isna(row['transaction_date']):
+                return False
+
+            try:
+                transaction_date = pd.to_datetime(str(row['transaction_date'])).date()
+            except ValueError:
+                return False
+
+            # 未来日付のチェック
+            if transaction_date > execution_date:
+                logger.warning(f"Skipping future date: {transaction_date}")
+                return False
+
+            # 金額の検証
+            if pd.isna(row['amount']):
+                return False
+
+            try:
+                # マイナス記号とカンマを考慮して処理
+                amount_str = str(row['amount']).strip()
+                # 先頭のマイナス記号を一時的に除去
+                is_negative = amount_str.startswith('-')
+                if is_negative:
+                    amount_str = amount_str[1:]
+
+                # カンマを除去して数値に変換
+                amount_val = float(amount_str.replace(',', ''))
+                # マイナスだった場合は符号を戻す
+                if is_negative:
+                    amount_val = -amount_val
+
+            except ValueError:
+                return False
+
+            # 分割払いの検証
+            inst_total = 0
+            if 'inst_total' in row and pd.notna(row['inst_total']):
+                try:
+                    inst_total = float(str(row['inst_total']).replace(',', ''))
+                except ValueError:
+                    return False
+
+            # 分割払いの場合のみ（inst_total > 0）、分割回数をチェック
+            if inst_total > 0:
+                if pd.isna(row['inst_num']):
+                    return False
+                try:
+                    inst_num = float(str(row['inst_num']).replace(',', ''))
+                    if inst_num <= 0:
+                        logger.warning(f"Invalid installment number {inst_num} for installment payment")
+                        return False
+                except ValueError:
+                    return False
+
+            return True
+
+        except Exception as e:
+            logger.error(f"Validation error: {str(e)}")
+            return False
+
+    # 有効な行のみを抽出
+    valid_df = df[df.apply(is_valid_row, axis=1)].copy()
+    logger.info(f"After basic validation: {len(valid_df)} records (removed {len(df) - len(valid_df)} records)")
+
+    # 日付形式の統一化
+    valid_df['transaction_date'] = pd.to_datetime(valid_df['transaction_date']).dt.strftime('%Y-%m-%d')
+    logger.info("Date format standardized")
+
+    # 金額のクレンジング（カンマ除去と数値化）
+    numeric_columns = ['amount', 'inst_total', 'inst_amount']
+    for col in numeric_columns:
+        if col in valid_df.columns:
+            valid_df[col] = valid_df[col].apply(lambda x: str(x).replace(',', '') if pd.notna(x) else x)
+            valid_df[col] = pd.to_numeric(valid_df[col], errors='coerce')
+            logger.info(f"Cleaned {col} column")
+
+    # inst_numの数値化
+    if 'inst_num' in valid_df.columns:
+        valid_df['inst_num'] = pd.to_numeric(valid_df['inst_num'], errors='coerce')
+        logger.info("Converted inst_num to numeric")
+
+    # 重複チェックと処理
+    duplicates = valid_df[valid_df.duplicated(['transaction_date', 'amount'], keep=False)]
+    if not duplicates.empty:
+        logger.info(f"\n=== Found {len(duplicates)} duplicate records ===")
+        # 重複レコードをグループ化して表示
+        for (date, amount), group in duplicates.groupby(['transaction_date', 'amount']):
+            logger.info(f"\nDuplicate set found:")
+            logger.info(f"Date: {date}, Amount: {amount}")
+            for _, row in group.iterrows():
+                logger.info(f"Description: {row['description']}")
+
+        # 削除されるレコードを保持するためのリスト
+        records_to_remove = []
+
+        # 特定条件に合致するレコードは残し、それ以外の重複は最初の1件のみ残す
+        def keep_record(row):
+            description = str(row['description']).lower()
+
+            # 特定条件に合致する場合は保持
+            if 'id' in description or 'コナミスポーツクラブ（会費）' in description:
+                logger.info(f"Keeping all duplicates for special condition: {row['description']}")
+                return True
+
+            # それ以外の場合、重複している場合は最初の1件のみ残す
+            same_records = valid_df[(valid_df['transaction_date'] == row['transaction_date']) &
+                                  (valid_df['amount'] == row['amount'])]
+            if len(same_records) > 1:
+                is_first = not valid_df[(valid_df['transaction_date'] == row['transaction_date']) &
+                                      (valid_df['amount'] == row['amount']) &
+                                      (valid_df.index < row.name)].shape[0] > 0
+                if not is_first:
+                    logger.info(f"Removing duplicate: {row['transaction_date']} - {row['description']}")
+                    records_to_remove.append(row)
+                return is_first
+
+            return True
+
+        # 条件に基づいて重複レコードをフィルタリング
+        final_df = valid_df[valid_df.apply(keep_record, axis=1)].copy()
+
+        # 削除されたレコードを保存
+        if records_to_remove:
+            removed_df = pd.DataFrame(records_to_remove)
+            save_removed_duplicates(removed_df, csv_file.name, output_dir)
+
+        logger.info(f"\n=== Duplicate processing summary ===")
+        logger.info(f"Original records: {len(valid_df)}")
+        logger.info(f"Records after duplicate removal: {len(final_df)}")
+        logger.info(f"Removed duplicates: {len(valid_df) - len(final_df)}")
+    else:
+        final_df = valid_df
+        logger.info("No duplicates found")
+
+    return final_df
+
+
+transaction_date	description	amount	inst_total	inst_num	inst_amount	memo	processed_at	source_file
+2024-01-29	飲料自販機／ｉＤ	130					2025-01-02 01:43:27	Vpass_2024-01.csv
+2025-01-01	FUTURE SHOP	1500	0.0	0.0	0.0	テスト用	2025-01-02 01:43:27	test_card_data.csv
+
+うーん、このロジックは正しいです。何故なら実際のcsvは正常な処理をされ、アウトプットされています。問題はremoved.duplicates.csvの記述がログファイルや結果と違っていることです。

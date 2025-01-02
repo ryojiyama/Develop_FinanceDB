@@ -1,108 +1,17 @@
 import pandas as pd
 import os
+import sys
 import logging
 from pathlib import Path
 
 # ロギングの設定
 logging.basicConfig(
-    level=logging.INFO,
+    level=logging.DEBUG,
     format='%(asctime)s - %(levelname)s - %(message)s',
     datefmt='%Y-%m-%d %H:%M:%S'
 )
 
 logger = logging.getLogger(__name__)
-
-def clean_and_validate_data(df: pd.DataFrame) -> pd.DataFrame:
-    """
-    データのクリーニングとバリデーションを行う
-
-    Args:
-        df (pd.DataFrame): 元のデータフレーム
-
-    Returns:
-        pd.DataFrame: クリーニング済みのデータフレーム
-    """
-    # 実行日を取得
-    execution_date = pd.Timestamp.now().date()
-
-    # 注意書き行を除去（transaction_dateが空白または日付以外、かつamountが空白または数値以外）
-    def is_valid_row(row):
-        try:
-            # 日付の検証
-            if pd.isna(row['transaction_date']):
-                return False
-            transaction_date = pd.to_datetime(str(row['transaction_date'])).date()
-
-            # 未来日付のチェック
-            if transaction_date > execution_date:
-                logger.warning(f"Future date detected: {transaction_date}")
-                return False
-
-            # 金額の検証
-            if pd.isna(row['amount']):
-                return False
-            float(str(row['amount']).replace(',', ''))
-
-            # 分割回数の検証（存在する場合）
-            if 'inst_num' in row and pd.notna(row['inst_num']):
-                inst_num = float(str(row['inst_num']).replace(',', ''))
-                if inst_num <= 0:
-                    logger.warning(f"Invalid installment number detected: {inst_num}")
-                    return False
-
-            return True
-        except (ValueError, TypeError):
-            return False
-
-    # 有効な行のみを抽出
-    df = df[df.apply(is_valid_row, axis=1)].copy()
-
-    # 日付形式の統一化
-    df['transaction_date'] = pd.to_datetime(df['transaction_date']).dt.strftime('%Y-%m-%d')
-
-    # 金額のクレンジング（カンマ除去と数値化）
-    numeric_columns = ['amount', 'inst_total', 'inst_amount']
-    for col in numeric_columns:
-        if col in df.columns:
-            df[col] = df[col].apply(lambda x: str(x).replace(',', '') if pd.notna(x) else x)
-            df[col] = pd.to_numeric(df[col], errors='coerce')
-
-    # inst_numの数値化
-    if 'inst_num' in df.columns:
-        df['inst_num'] = pd.to_numeric(df['inst_num'], errors='coerce')
-
-    # 重複チェックと処理
-    # まず重複レコードを特定
-    duplicates = df[df.duplicated(['transaction_date', 'amount'], keep=False)]
-    if not duplicates.empty:
-        logger.warning(f"Found {len(duplicates)} duplicate records:")
-        for _, dup in duplicates.iterrows():
-            logger.warning(f"Duplicate: Date={dup['transaction_date']}, Amount={dup['amount']}, Description={dup['description']}")
-
-        # 特定条件に合致するレコードは残し、それ以外の重複は最初の1件のみ残す
-        def keep_record(row):
-            description = str(row['description']).lower()
-
-            # 特定条件に合致する場合は保持
-            if 'id' in description or 'コナミスポーツクラブ（会費）' in description:
-                return True
-
-            # それ以外の場合、重複している場合は最初の1件のみ残す
-            same_records = df[(df['transaction_date'] == row['transaction_date']) &
-                            (df['amount'] == row['amount'])]
-            if len(same_records) > 1:
-                return not df[(df['transaction_date'] == row['transaction_date']) &
-                            (df['amount'] == row['amount']) &
-                            (df.index < row.name)].shape[0] > 0
-
-            return True
-
-        # 条件に基づいて重複レコードをフィルタリング
-        df = df[df.apply(keep_record, axis=1)].copy()
-
-        logger.info(f"After duplicate processing: {len(df)} records remaining")
-
-    return df
 
 def read_csv_with_encoding(file_path: Path) -> pd.DataFrame:
     """
@@ -148,6 +57,192 @@ def ensure_directories(input_dir: Path, output_dir: Path) -> None:
 
     output_dir.mkdir(parents=True, exist_ok=True)
     logger.info(f"Directories verified - Input: {input_dir}, Output: {output_dir}")
+
+def save_removed_duplicates(removed_records: pd.DataFrame, source_file: str, output_dir: Path) -> None:
+    """
+    削除された重複レコードを記録するCSVファイルに保存する
+
+    Args:
+        removed_records (pd.DataFrame): 削除されたレコード
+        source_file (str): 元のファイル名
+        output_dir (Path): 出力ディレクトリ
+    """
+    removed_file = output_dir / 'removed_duplicates.csv'
+
+    # 処理日時とソースファイルの情報を追加
+    removed_records = removed_records.copy()
+    removed_records['processed_at'] = pd.Timestamp.now().strftime('%Y-%m-%d %H:%M:%S')
+    removed_records['source_file'] = source_file
+
+    # ファイルが存在する場合は追記、なければ新規作成
+    if removed_file.exists():
+        existing_records = pd.read_csv(removed_file)
+        updated_records = pd.concat([existing_records, removed_records], ignore_index=True)
+    else:
+        updated_records = removed_records
+
+    # 保存
+    updated_records.to_csv(removed_file, index=False, encoding='utf-8')
+    logger.info(f"Saved {len(removed_records)} removed records to {removed_file}")
+
+def clean_and_validate_data(df: pd.DataFrame, source_filename: str, output_dir: Path) -> pd.DataFrame:
+    """
+    データのクリーニングとバリデーションを行う
+
+    Args:
+        df (pd.DataFrame): 元のデータフレーム
+        source_filename (str): 元のファイル名
+        output_dir (Path): 出力ディレクトリのパス
+
+    Returns:
+        pd.DataFrame: クリーニング済みのデータフレーム
+    """
+    logger.info(f"Starting validation with {len(df)} records")
+    logger.info("Initial data sample:")
+    logger.info(f"\n{df.head()}")
+
+    # 実行日を取得
+    execution_date = pd.Timestamp.now().date()
+
+    # 注意書き行を除去（transaction_dateが空白または日付以外、かつamountが空白または数値以外）
+    def is_valid_row(row):
+        try:
+            # 日付の検証
+            if pd.isna(row['transaction_date']):
+                return False
+
+            try:
+                transaction_date = pd.to_datetime(str(row['transaction_date'])).date()
+            except ValueError:
+                return False
+
+            # 未来日付のチェック
+            if transaction_date > execution_date:
+                logger.warning(f"Skipping future date: {transaction_date}")
+                return False
+
+            # 金額の検証
+            if pd.isna(row['amount']):
+                return False
+
+            try:
+                # マイナス記号とカンマを考慮して処理
+                amount_str = str(row['amount']).strip()
+                # 先頭のマイナス記号を一時的に除去
+                is_negative = amount_str.startswith('-')
+                if is_negative:
+                    amount_str = amount_str[1:]
+
+                # カンマを除去して数値に変換
+                amount_val = float(amount_str.replace(',', ''))
+                # マイナスだった場合は符号を戻す
+                if is_negative:
+                    amount_val = -amount_val
+
+            except ValueError:
+                return False
+
+            # 分割払いの検証
+            inst_total = 0
+            if 'inst_total' in row and pd.notna(row['inst_total']):
+                try:
+                    inst_total = float(str(row['inst_total']).replace(',', ''))
+                except ValueError:
+                    return False
+
+            # 分割払いの場合のみ（inst_total > 0）、分割回数をチェック
+            if inst_total > 0:
+                if pd.isna(row['inst_num']):
+                    return False
+                try:
+                    inst_num = float(str(row['inst_num']).replace(',', ''))
+                    if inst_num <= 0:
+                        logger.warning(f"Invalid installment number {inst_num} for installment payment")
+                        return False
+                except ValueError:
+                    return False
+
+            return True
+
+        except Exception as e:
+            logger.error(f"Validation error: {str(e)}")
+            return False
+
+    # 有効な行のみを抽出
+    valid_df = df[df.apply(is_valid_row, axis=1)].copy()
+    logger.info(f"After basic validation: {len(valid_df)} records (removed {len(df) - len(valid_df)} records)")
+
+    # 日付形式の統一化
+    valid_df['transaction_date'] = pd.to_datetime(valid_df['transaction_date']).dt.strftime('%Y-%m-%d')
+    logger.info("Date format standardized")
+
+    # 金額のクレンジング（カンマ除去と数値化）
+    numeric_columns = ['amount', 'inst_total', 'inst_amount']
+    for col in numeric_columns:
+        if col in valid_df.columns:
+            valid_df[col] = valid_df[col].apply(lambda x: str(x).replace(',', '') if pd.notna(x) else x)
+            valid_df[col] = pd.to_numeric(valid_df[col], errors='coerce')
+            logger.info(f"Cleaned {col} column")
+
+    # inst_numの数値化
+    if 'inst_num' in valid_df.columns:
+        valid_df['inst_num'] = pd.to_numeric(valid_df['inst_num'], errors='coerce')
+        logger.info("Converted inst_num to numeric")
+
+    # 重複チェックと処理
+    duplicates = valid_df[valid_df.duplicated(['transaction_date', 'amount'], keep=False)]
+    if not duplicates.empty:
+        logger.info(f"\n=== Found {len(duplicates)} duplicate records ===")
+        # 重複レコードをグループ化して表示
+        for (date, amount), group in duplicates.groupby(['transaction_date', 'amount']):
+            logger.info(f"\nDuplicate set found:")
+            logger.info(f"Date: {date}, Amount: {amount}")
+            for _, row in group.iterrows():
+                logger.info(f"Description: {row['description']}")
+
+        # 削除されるレコードを保持するためのリスト
+        records_to_remove = []
+
+        # 特定条件に合致するレコードは残し、それ以外の重複は最初の1件のみ残す
+        def keep_record(row):
+            description = str(row['description']).lower()
+
+            # 特定条件に合致する場合は保持
+            if 'id' in description or 'コナミスポーツクラブ（会費）' in description:
+                logger.info(f"Keeping all duplicates for special condition: {row['description']}")
+                return True
+
+            # それ以外の場合、重複している場合は最初の1件のみ残す
+            same_records = valid_df[(valid_df['transaction_date'] == row['transaction_date']) &
+                                  (valid_df['amount'] == row['amount'])]
+            if len(same_records) > 1:
+                is_first = not valid_df[(valid_df['transaction_date'] == row['transaction_date']) &
+                                      (valid_df['amount'] == row['amount']) &
+                                      (valid_df.index < row.name)].shape[0] > 0
+                if not is_first:
+                    logger.info(f"Removing duplicate: {row['transaction_date']} - {row['description']}")
+                    records_to_remove.append(row)
+                return is_first
+
+            return True
+
+        # 条件に基づいて重複レコードをフィルタリング
+        final_df = valid_df[valid_df.apply(keep_record, axis=1)].copy()
+
+        # 削除されたレコードを保存
+        if records_to_remove:
+            removed_df = pd.DataFrame(records_to_remove)
+            save_removed_duplicates(removed_df, source_filename, output_dir)  # 引数として受け取ったsource_filenameを使用
+
+        logger.info(f"\n=== Duplicate processing summary ===")
+        logger.info(f"Original records: {len(valid_df)}")
+        logger.info(f"Records after duplicate removal: {len(final_df)}")
+        logger.info(f"Removed duplicates: {len(valid_df) - len(final_df)}")
+    else:
+        final_df = valid_df
+        logger.info("No duplicates found")
+
+    return final_df
 
 def convert_card_csv_columns(input_dir: Path, output_dir: Path) -> None:
     """
@@ -199,7 +294,7 @@ def convert_card_csv_columns(input_dir: Path, output_dir: Path) -> None:
             selected_df.columns = list(column_mapping.values())
 
             # データのクリーニングとバリデーション
-            cleaned_df = clean_and_validate_data(selected_df)
+            cleaned_df = clean_and_validate_data(selected_df, csv_file.name, output_dir)
 
             # 処理対象をcleaned_dfに置き換え
             df = cleaned_df
@@ -221,11 +316,35 @@ if __name__ == '__main__':
     # プロジェクトのルートディレクトリを取得
     project_root = Path(__file__).parent.parent
 
+    # ログディレクトリの作成
+    log_dir = project_root / 'logs'
+    log_dir.mkdir(exist_ok=True)
+
+    # ログファイルのパス（タイムスタンプ付き）
+    log_file = log_dir / f'card_processing_{pd.Timestamp.now().strftime("%Y%m%d_%H%M%S")}.log'
+
+    # ロギングの設定
+    file_handler = logging.FileHandler(log_file, mode='w', encoding='utf-8')
+    console_handler = logging.StreamHandler(sys.stdout)
+
+    # フォーマッターの設定
+    formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+    file_handler.setFormatter(formatter)
+    console_handler.setFormatter(formatter)
+
+    # ルートロガーの設定
+    root_logger = logging.getLogger()
+    root_logger.setLevel(logging.INFO)
+    root_logger.addHandler(file_handler)
+    root_logger.addHandler(console_handler)
+
+    logger = logging.getLogger(__name__)
+
     # 入力・出力ディレクトリを設定
     input_directory = project_root / 'data/csv/card'
     output_directory = project_root / 'data/processed'
 
-    logger.info("Starting CSV conversion process")
+    logger.info(f"Starting CSV conversion process. Log file: {log_file}")
 
     try:
         # カラム名変換を実行

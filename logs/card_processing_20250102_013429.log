@@ -1,0 +1,92 @@
+2025-01-02 01:34:29,443 - INFO - Starting CSV conversion process. Log file: /workspace/logs/card_processing_20250102_013429.log
+2025-01-02 01:34:29,443 - INFO - Directories verified - Input: /workspace/data/csv/card, Output: /workspace/data/processed
+2025-01-02 01:34:29,444 - INFO - Found 2 CSV files to process
+2025-01-02 01:34:29,444 - INFO - Processing file: Vpass_2024-01.csv
+2025-01-02 01:34:29,445 - INFO - Reading file: Vpass_2024-01.csv
+2025-01-02 01:34:29,447 - INFO - Starting validation with 83 records
+2025-01-02 01:34:29,447 - INFO - Initial data sample:
+2025-01-02 01:34:29,449 - INFO - 
+  transaction_date   description amount inst_total inst_num  inst_amount memo
+0       2024/01/01    アフラック（ＷＥＢ）   2345        NaN      NaN          NaN  NaN
+1       2024/01/02           ニトリ   2189        NaN      NaN          NaN  NaN
+2       2024/01/03    かつアンドかつ明石店   3336        NaN      NaN          NaN  NaN
+3       2024/01/04  ＡＭＡＺＯＮ．ＣＯ．ＪＰ   7348        NaN      NaN          NaN  NaN
+4       2024/01/04  ＡＭＡＺＯＮ．ＣＯ．ＪＰ   2007        NaN      NaN          NaN  NaN
+2025-01-02 01:34:29,456 - INFO - After basic validation: 79 records (removed 4 records)
+2025-01-02 01:34:29,457 - INFO - Date format standardized
+2025-01-02 01:34:29,457 - INFO - Cleaned amount column
+2025-01-02 01:34:29,457 - INFO - Cleaned inst_total column
+2025-01-02 01:34:29,458 - INFO - Cleaned inst_amount column
+2025-01-02 01:34:29,458 - INFO - Converted inst_num to numeric
+2025-01-02 01:34:29,458 - INFO - 
+=== Found 4 duplicate records ===
+2025-01-02 01:34:29,458 - INFO - 
+Duplicate set found:
+2025-01-02 01:34:29,458 - INFO - Date: 2024-01-11, Amount: 7480
+2025-01-02 01:34:29,459 - INFO - Description: コナミスポーツクラブ（会費）
+2025-01-02 01:34:29,459 - INFO - Description: コナミスポーツクラブ（会費）
+2025-01-02 01:34:29,459 - INFO - 
+Duplicate set found:
+2025-01-02 01:34:29,459 - INFO - Date: 2024-01-27, Amount: 4300
+2025-01-02 01:34:29,459 - INFO - Description: ＡＰＰＬＥ　ＣＯＭ　ＢＩＬＬ
+2025-01-02 01:34:29,459 - INFO - Description: ＡＰＰＬＥ　ＣＯＭ　ＢＩＬＬ
+2025-01-02 01:34:29,461 - INFO - Keeping all duplicates for special condition: コナミスポーツクラブ（会費）
+2025-01-02 01:34:29,461 - INFO - Keeping all duplicates for special condition: コナミスポーツクラブ（会費）
+2025-01-02 01:34:29,464 - INFO - Removing duplicate: 2024-01-27 - ＡＰＰＬＥ　ＣＯＭ　ＢＩＬＬ
+2025-01-02 01:34:29,469 - ERROR - Error processing Vpass_2024-01.csv: name 'csv_file' is not defined
+Traceback (most recent call last):
+  File "/workspace/src/convert_card_csv.py", line 293, in convert_card_csv_columns
+    cleaned_df = clean_and_validate_data(selected_df, csv_file.name, output_dir)
+  File "/workspace/src/convert_card_csv.py", line 231, in clean_and_validate_data
+    save_removed_duplicates(removed_df, csv_file.name, output_dir)
+                                        ^^^^^^^^
+NameError: name 'csv_file' is not defined. Did you mean: 'log_file'?
+2025-01-02 01:34:29,470 - INFO - Processing file: test_card_data.csv
+2025-01-02 01:34:29,471 - INFO - Reading file: test_card_data.csv
+2025-01-02 01:34:29,473 - INFO - Starting validation with 15 records
+2025-01-02 01:34:29,473 - INFO - Initial data sample:
+2025-01-02 01:34:29,475 - INFO - 
+  transaction_date       description amount  inst_total  inst_num  inst_amount  memo
+0       2024/01/15        セブンイレブン渋谷店   1200         0.0       0.0          0.0  テスト用
+1       2024/01/15       ファミリーマート品川店    800         0.0       0.0          0.0  テスト用
+2       2024/01/20    コナミスポーツクラブ（会費）   8800         0.0       0.0          0.0  テスト用
+3       2024/01/20    コナミスポーツクラブ（会費）   8800         0.0       0.0          0.0  テスト用
+4       2024/01/21  id Shopping Mall   5000         0.0       0.0          0.0  テスト用
+2025-01-02 01:34:29,477 - WARNING - Invalid installment number 0.0 for installment payment
+2025-01-02 01:34:29,477 - INFO - After basic validation: 10 records (removed 5 records)
+2025-01-02 01:34:29,478 - INFO - Date format standardized
+2025-01-02 01:34:29,478 - INFO - Cleaned amount column
+2025-01-02 01:34:29,478 - INFO - Cleaned inst_total column
+2025-01-02 01:34:29,478 - INFO - Cleaned inst_amount column
+2025-01-02 01:34:29,479 - INFO - Converted inst_num to numeric
+2025-01-02 01:34:29,479 - INFO - 
+=== Found 6 duplicate records ===
+2025-01-02 01:34:29,479 - INFO - 
+Duplicate set found:
+2025-01-02 01:34:29,479 - INFO - Date: 2024-01-20, Amount: 8800
+2025-01-02 01:34:29,479 - INFO - Description: コナミスポーツクラブ（会費）
+2025-01-02 01:34:29,480 - INFO - Description: コナミスポーツクラブ（会費）
+2025-01-02 01:34:29,480 - INFO - 
+Duplicate set found:
+2025-01-02 01:34:29,480 - INFO - Date: 2024-01-21, Amount: 5000
+2025-01-02 01:34:29,480 - INFO - Description: id Shopping Mall
+2025-01-02 01:34:29,480 - INFO - Description: id Shopping Mall
+2025-01-02 01:34:29,480 - INFO - 
+Duplicate set found:
+2025-01-02 01:34:29,480 - INFO - Date: 2024-01-25, Amount: 3000
+2025-01-02 01:34:29,480 - INFO - Description: スーパーマーケット
+2025-01-02 01:34:29,480 - INFO - Description: スーパーマーケット
+2025-01-02 01:34:29,481 - INFO - Keeping all duplicates for special condition: コナミスポーツクラブ（会費）
+2025-01-02 01:34:29,481 - INFO - Keeping all duplicates for special condition: コナミスポーツクラブ（会費）
+2025-01-02 01:34:29,481 - INFO - Keeping all duplicates for special condition: id Shopping Mall
+2025-01-02 01:34:29,481 - INFO - Keeping all duplicates for special condition: id Shopping Mall
+2025-01-02 01:34:29,482 - INFO - Removing duplicate: 2024-01-25 - スーパーマーケット
+2025-01-02 01:34:29,482 - ERROR - Error processing test_card_data.csv: name 'csv_file' is not defined
+Traceback (most recent call last):
+  File "/workspace/src/convert_card_csv.py", line 293, in convert_card_csv_columns
+    cleaned_df = clean_and_validate_data(selected_df, csv_file.name, output_dir)
+  File "/workspace/src/convert_card_csv.py", line 231, in clean_and_validate_data
+    save_removed_duplicates(removed_df, csv_file.name, output_dir)
+                                        ^^^^^^^^
+NameError: name 'csv_file' is not defined. Did you mean: 'log_file'?
+2025-01-02 01:34:29,483 - INFO - CSV conversion process completed successfully
