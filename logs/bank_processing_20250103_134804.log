@@ -1,0 +1,9 @@
+2025-01-03 13:48:04,232 - INFO - Starting bank CSV processing. Log file: /workspace/logs/bank_processing_20250103_134804.log
+2025-01-03 13:48:04,232 - INFO - Directories verified - Input: /workspace/data/csv/bank, Output: /workspace/data/processed
+2025-01-03 13:48:04,233 - INFO - Found 1 CSV files to process
+2025-01-03 13:48:04,233 - INFO - Processing file: 三井住友銀行_2024-02-19.csv
+2025-01-03 13:48:04,233 - INFO - Attempting to read file: /workspace/data/csv/bank/三井住友銀行_2024-02-19.csv
+2025-01-03 13:48:04,237 - INFO - Starting validation with 21 records
+2025-01-03 13:48:04,240 - INFO - After validation: 21 valid records (removed 0 records)
+2025-01-03 13:48:04,243 - INFO - Successfully processed and saved: /workspace/data/processed/processed_三井住友銀行_2024-02-19.csv
+2025-01-03 13:48:04,243 - INFO - Bank CSV processing completed successfully

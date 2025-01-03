@@ -1,3 +1,3 @@
 transaction_date,description,amount,inst_total,inst_num,inst_amount,memo,processed_at,source_file
-2024-01-27,ＡＰＰＬＥ　ＣＯＭ　ＢＩＬＬ,4300,,,,,2025-01-03 11:55:30,Vpass_2024-01.csv
-2024-01-25,スーパーマーケット,3000,0.0,0.0,0.0,テスト用,2025-01-03 11:55:30,test_card_data.csv
+2024-01-27,ＡＰＰＬＥ　ＣＯＭ　ＢＩＬＬ,4300,,,,,2025-01-03 12:20:47,Vpass_2024-01.csv
+2024-01-25,スーパーマーケット,3000,0.0,0.0,0.0,テスト用,2025-01-03 12:20:47,test_card_data.csv

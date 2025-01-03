@@ -1,0 +1,14 @@
+2025-01-03 13:42:23,831 - INFO - Starting bank CSV processing. Log file: /workspace/logs/bank_processing_20250103_134223.log
+2025-01-03 13:42:23,831 - INFO - Directories verified - Input: /workspace/data/csv/bank, Output: /workspace/data/processed
+2025-01-03 13:42:23,831 - INFO - Found 1 CSV files to process
+2025-01-03 13:42:23,831 - INFO - Processing file: 三井住友銀行_2024-02-19.csv
+2025-01-03 13:42:23,832 - ERROR - Error reading file with cp932: Too many columns specified: expected 10 and found 7
+2025-01-03 13:42:23,834 - ERROR - Error reading file with shift_jis: Too many columns specified: expected 10 and found 7
+2025-01-03 13:42:23,835 - ERROR - Error processing 三井住友銀行_2024-02-19.csv: Unable to read file with any of the encodings: ['cp932', 'utf-8', 'shift_jis', 'euc_jp']
+Traceback (most recent call last):
+  File "/workspace/src/convert_bank_csv.py", line 256, in process_bank_csv
+    df = read_csv_with_encoding(csv_file)
+  File "/workspace/src/convert_bank_csv.py", line 85, in read_csv_with_encoding
+    raise ValueError(f"Unable to read file with any of the encodings: {encodings}")
+ValueError: Unable to read file with any of the encodings: ['cp932', 'utf-8', 'shift_jis', 'euc_jp']
+2025-01-03 13:42:23,836 - INFO - Bank CSV processing completed successfully

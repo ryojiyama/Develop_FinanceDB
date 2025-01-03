@@ -16,10 +16,8 @@ logger = logging.getLogger(__name__)
 def read_csv_with_encoding(file_path: Path) -> pd.DataFrame:
     """
     7列固定でCSVファイルを読み込む
-
     Args:
         file_path (Path): CSVファイルのパス
-
     Returns:
         pd.DataFrame: 読み込んだデータフレーム
     """
@@ -61,20 +59,13 @@ def ensure_directories(input_dir: Path, output_dir: Path) -> None:
 def save_removed_duplicates(removed_records: pd.DataFrame, source_file: str, output_dir: Path) -> None:
     """
     削除された重複レコードを記録するCSVファイルに保存する
-
     Args:
         removed_records (pd.DataFrame): 削除されたレコード
         source_file (str): 元のファイル名
         output_dir (Path): 出力ディレクトリ
     """
-    # デバッグ用にログ出力
-    logger.info(f"\n=== Removed records Content ===")
-    logger.info(f"Number of records: {len(removed_records)}")
-    logger.info(f"Records content:\n{removed_records}")
-
     removed_file = output_dir / 'removed_duplicates.csv'
 
-    # 処理日時とソースファイルの情報を追加
     removed_records = removed_records.copy()
     removed_records['processed_at'] = pd.Timestamp.now().strftime('%Y-%m-%d %H:%M:%S')
     removed_records['source_file'] = source_file
@@ -98,13 +89,10 @@ def clean_and_validate_data(df: pd.DataFrame, source_filename: str, output_dir: 
         df (pd.DataFrame): 元のデータフレーム
         source_filename (str): 元のファイル名
         output_dir (Path): 出力ディレクトリのパス
-
     Returns:
         pd.DataFrame: クリーニング済みのデータフレーム
     """
     logger.info(f"Starting validation with {len(df)} records")
-    logger.info("Initial data sample:")
-    logger.info(f"\n{df.head()}")
 
     # 実行日を取得
     execution_date = pd.Timestamp.now().date()
@@ -179,7 +167,6 @@ def clean_and_validate_data(df: pd.DataFrame, source_filename: str, output_dir: 
 
     # 日付形式の統一化
     valid_df['transaction_date'] = pd.to_datetime(valid_df['transaction_date']).dt.strftime('%Y-%m-%d')
-    logger.info("Date format standardized")
 
     # 金額のクレンジング（カンマ除去と数値化）
     numeric_columns = ['amount', 'inst_total', 'inst_amount']
@@ -187,12 +174,10 @@ def clean_and_validate_data(df: pd.DataFrame, source_filename: str, output_dir: 
         if col in valid_df.columns:
             valid_df[col] = valid_df[col].apply(lambda x: str(x).replace(',', '') if pd.notna(x) else x)
             valid_df[col] = pd.to_numeric(valid_df[col], errors='coerce')
-            logger.info(f"Cleaned {col} column")
 
     # inst_numの数値化
     if 'inst_num' in valid_df.columns:
         valid_df['inst_num'] = pd.to_numeric(valid_df['inst_num'], errors='coerce')
-        logger.info("Converted inst_num to numeric")
 
     # 重複チェックと処理
     duplicates = valid_df[valid_df.duplicated(['transaction_date', 'amount'], keep=False)]
@@ -200,10 +185,8 @@ def clean_and_validate_data(df: pd.DataFrame, source_filename: str, output_dir: 
         logger.info(f"\n=== Found {len(duplicates)} duplicate records ===")
         # 重複レコードをグループ化して表示
         for (date, amount), group in duplicates.groupby(['transaction_date', 'amount']):
-            logger.info(f"\nDuplicate set found:")
-            logger.info(f"Date: {date}, Amount: {amount}")
-            for _, row in group.iterrows():
-                logger.info(f"Description: {row['description']}")
+            descriptions = group['description'].unique()
+            logger.info(f"Found duplicates: {date}, Amount: {amount}, {' | '.join(descriptions)}")
 
         # 特定条件に合致するレコードは残し、それ以外の重複は最初の1件のみ残す
         def keep_record(row):
@@ -228,22 +211,15 @@ def clean_and_validate_data(df: pd.DataFrame, source_filename: str, output_dir: 
             return True
         # 重複処理前のデータを保持
         before_removal = valid_df.copy()
-
-        # 条件に基づいて重複レコードをフィルタリング
         final_df = valid_df[valid_df.apply(keep_record, axis=1)].copy()
-
         # 実際に削除されたデータを特定
         removed_records = before_removal[~before_removal.index.isin(final_df.index)]
 
         # 削除されたデータがある場合、保存
         if not removed_records.empty:
-            logger.info(f"Saving {len(removed_records)} removed records")
             save_removed_duplicates(removed_records, source_filename, output_dir)  # 引数として受け取ったsource_filenameを使用
 
-        logger.info(f"\n=== Duplicate processing summary ===")
-        logger.info(f"Original records: {len(valid_df)}")
-        logger.info(f"Records after duplicate removal: {len(final_df)}")
-        logger.info(f"Removed duplicates: {len(valid_df) - len(final_df)}")
+        logger.info(f"Duplicate processing completed: {len(final_df)} records remaining")
     else:
         final_df = valid_df
         logger.info("No duplicates found")
