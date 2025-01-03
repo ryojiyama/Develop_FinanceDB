@@ -564,3 +564,4 @@ Duplicate set found:
         imported_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         error_message TEXT
     );
+出来上がったデータを見ると、withdrawal, depositのデータに小数点がついています。これは必要ないのでどちらも整数にできないでしょうか？

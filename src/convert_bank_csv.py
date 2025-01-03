@@ -117,10 +117,10 @@ def validate_transaction(row: pd.Series) -> Dict[str, Any]:
             result['is_valid'] = False
             result['errors'].append("Invalid date format")
 
-    # 取引金額のバリデーション
+    # 取引金額のバリデーション（整数値として処理）
     if pd.notna(row['withdrawal']):
         try:
-            withdrawal = float(str(row['withdrawal']).replace(',', ''))
+            withdrawal = int(float(str(row['withdrawal']).replace(',', '')))
             if withdrawal <= 0:
                 result['is_valid'] = False
                 result['errors'].append("Withdrawal amount must be positive")
@@ -130,7 +130,7 @@ def validate_transaction(row: pd.Series) -> Dict[str, Any]:
 
     if pd.notna(row['deposit']):
         try:
-            deposit = float(str(row['deposit']).replace(',', ''))
+            deposit = int(float(str(row['deposit']).replace(',', '')))
             if deposit <= 0:
                 result['is_valid'] = False
                 result['errors'].append("Deposit amount must be positive")
@@ -219,12 +219,21 @@ def clean_and_validate_data(df: pd.DataFrame, source_filename: str, output_dir: 
         valid_df['transaction_date'] = pd.to_datetime(valid_df['transaction_date']).dt.strftime('%Y-%m-%d')
 
         # 金額のクレンジング
+        def convert_to_integer(x):
+            if pd.isna(x):
+                return None
+            # カンマを削除し、一度floatに変換してから整数に
+            cleaned = str(x).replace(',', '')
+            return int(float(cleaned))
+
+        # 金額列を整数に変換
         numeric_columns = ['withdrawal', 'deposit', 'balance']
         for col in numeric_columns:
             if col in valid_df.columns:
-                valid_df[col] = valid_df[col].apply(
-                    lambda x: pd.to_numeric(str(x).replace(',', '')) if pd.notna(x) else None
-                )
+                # 一度値を変換
+                valid_df[col] = valid_df[col].apply(convert_to_integer)
+                # 明示的にint64型に変換（NAを許容）
+                valid_df[col] = valid_df[col].astype('Int64')
 
         # 文字列カラムのクレンジング
         string_columns = ['description', 'memo', 'label']
