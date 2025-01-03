@@ -67,6 +67,11 @@ def save_removed_duplicates(removed_records: pd.DataFrame, source_file: str, out
         source_file (str): 元のファイル名
         output_dir (Path): 出力ディレクトリ
     """
+    # デバッグ用にログ出力
+    logger.info(f"\n=== Removed records Content ===")
+    logger.info(f"Number of records: {len(removed_records)}")
+    logger.info(f"Records content:\n{removed_records}")
+
     removed_file = output_dir / 'removed_duplicates.csv'
 
     # 処理日時とソースファイルの情報を追加
@@ -200,9 +205,6 @@ def clean_and_validate_data(df: pd.DataFrame, source_filename: str, output_dir: 
             for _, row in group.iterrows():
                 logger.info(f"Description: {row['description']}")
 
-        # 削除されるレコードを保持するためのリスト
-        records_to_remove = []
-
         # 特定条件に合致するレコードは残し、それ以外の重複は最初の1件のみ残す
         def keep_record(row):
             description = str(row['description']).lower()
@@ -221,18 +223,22 @@ def clean_and_validate_data(df: pd.DataFrame, source_filename: str, output_dir: 
                                       (valid_df.index < row.name)].shape[0] > 0
                 if not is_first:
                     logger.info(f"Removing duplicate: {row['transaction_date']} - {row['description']}")
-                    records_to_remove.append(row)
                 return is_first
 
             return True
+        # 重複処理前のデータを保持
+        before_removal = valid_df.copy()
 
         # 条件に基づいて重複レコードをフィルタリング
         final_df = valid_df[valid_df.apply(keep_record, axis=1)].copy()
 
-        # 削除されたレコードを保存
-        if records_to_remove:
-            removed_df = pd.DataFrame(records_to_remove)
-            save_removed_duplicates(removed_df, source_filename, output_dir)  # 引数として受け取ったsource_filenameを使用
+        # 実際に削除されたデータを特定
+        removed_records = before_removal[~before_removal.index.isin(final_df.index)]
+
+        # 削除されたデータがある場合、保存
+        if not removed_records.empty:
+            logger.info(f"Saving {len(removed_records)} removed records")
+            save_removed_duplicates(removed_records, source_filename, output_dir)  # 引数として受け取ったsource_filenameを使用
 
         logger.info(f"\n=== Duplicate processing summary ===")
         logger.info(f"Original records: {len(valid_df)}")

@@ -1,0 +1,104 @@
+2025-01-02 22:24:32,781 - INFO - Starting CSV conversion process. Log file: /workspace/logs/card_processing_20250102_222432.log
+2025-01-02 22:24:32,782 - INFO - Directories verified - Input: /workspace/data/csv/card, Output: /workspace/data/processed
+2025-01-02 22:24:32,782 - INFO - Found 2 CSV files to process
+2025-01-02 22:24:32,782 - INFO - Processing file: Vpass_2024-01.csv
+2025-01-02 22:24:32,784 - INFO - Reading file: Vpass_2024-01.csv
+2025-01-02 22:24:32,786 - INFO - Starting validation with 83 records
+2025-01-02 22:24:32,786 - INFO - Initial data sample:
+2025-01-02 22:24:32,787 - INFO - 
+  transaction_date   description amount inst_total inst_num  inst_amount memo
+0       2024/01/01    アフラック（ＷＥＢ）   2345        NaN      NaN          NaN  NaN
+1       2024/01/02           ニトリ   2189        NaN      NaN          NaN  NaN
+2       2024/01/03    かつアンドかつ明石店   3336        NaN      NaN          NaN  NaN
+3       2024/01/04  ＡＭＡＺＯＮ．ＣＯ．ＪＰ   7348        NaN      NaN          NaN  NaN
+4       2024/01/04  ＡＭＡＺＯＮ．ＣＯ．ＪＰ   2007        NaN      NaN          NaN  NaN
+2025-01-02 22:24:32,795 - INFO - After basic validation: 79 records (removed 4 records)
+2025-01-02 22:24:32,796 - INFO - Date format standardized
+2025-01-02 22:24:32,796 - INFO - Cleaned amount column
+2025-01-02 22:24:32,796 - INFO - Cleaned inst_total column
+2025-01-02 22:24:32,797 - INFO - Cleaned inst_amount column
+2025-01-02 22:24:32,797 - INFO - Converted inst_num to numeric
+2025-01-02 22:24:32,797 - INFO - 
+=== Found 4 duplicate records ===
+2025-01-02 22:24:32,798 - INFO - 
+Duplicate set found:
+2025-01-02 22:24:32,798 - INFO - Date: 2024-01-11, Amount: 7480
+2025-01-02 22:24:32,798 - INFO - Description: コナミスポーツクラブ（会費）
+2025-01-02 22:24:32,798 - INFO - Description: コナミスポーツクラブ（会費）
+2025-01-02 22:24:32,798 - INFO - 
+Duplicate set found:
+2025-01-02 22:24:32,799 - INFO - Date: 2024-01-27, Amount: 4300
+2025-01-02 22:24:32,799 - INFO - Description: ＡＰＰＬＥ　ＣＯＭ　ＢＩＬＬ
+2025-01-02 22:24:32,799 - INFO - Description: ＡＰＰＬＥ　ＣＯＭ　ＢＩＬＬ
+2025-01-02 22:24:32,801 - INFO - Keeping all duplicates for special condition: コナミスポーツクラブ（会費）
+2025-01-02 22:24:32,801 - INFO - Keeping all duplicates for special condition: コナミスポーツクラブ（会費）
+2025-01-02 22:24:32,804 - INFO - Removing duplicate: 2024-01-27 - ＡＰＰＬＥ　ＣＯＭ　ＢＩＬＬ
+2025-01-02 22:24:32,808 - INFO - 
+=== Removed records Content ===
+2025-01-02 22:24:32,808 - INFO - Number of records: 1
+2025-01-02 22:24:32,810 - INFO - Records content:
+   transaction_date description  amount  inst_total  inst_num  inst_amount  memo
+79       2024-01-29    飲料自販機／ｉＤ     130         NaN       NaN          NaN   NaN
+2025-01-02 22:24:32,812 - INFO - Saved 1 removed records to /workspace/data/processed/removed_duplicates.csv
+2025-01-02 22:24:32,813 - INFO - 
+=== Duplicate processing summary ===
+2025-01-02 22:24:32,813 - INFO - Original records: 79
+2025-01-02 22:24:32,813 - INFO - Records after duplicate removal: 78
+2025-01-02 22:24:32,813 - INFO - Removed duplicates: 1
+2025-01-02 22:24:32,813 - INFO - Cleaned data shape: (78, 7)
+2025-01-02 22:24:32,814 - INFO - Successfully processed and saved: /workspace/data/processed/processed_Vpass_2024-01.csv
+2025-01-02 22:24:32,814 - INFO - Processing file: test_card_data.csv
+2025-01-02 22:24:32,815 - INFO - Reading file: test_card_data.csv
+2025-01-02 22:24:32,817 - INFO - Starting validation with 15 records
+2025-01-02 22:24:32,817 - INFO - Initial data sample:
+2025-01-02 22:24:32,819 - INFO - 
+  transaction_date       description amount  inst_total  inst_num  inst_amount  memo
+0       2024/01/15        セブンイレブン渋谷店   1200         0.0       0.0          0.0  テスト用
+1       2024/01/15       ファミリーマート品川店    800         0.0       0.0          0.0  テスト用
+2       2024/01/20    コナミスポーツクラブ（会費）   8800         0.0       0.0          0.0  テスト用
+3       2024/01/20    コナミスポーツクラブ（会費）   8800         0.0       0.0          0.0  テスト用
+4       2024/01/21  id Shopping Mall   5000         0.0       0.0          0.0  テスト用
+2025-01-02 22:24:32,820 - WARNING - Invalid installment number 0.0 for installment payment
+2025-01-02 22:24:32,821 - INFO - After basic validation: 10 records (removed 5 records)
+2025-01-02 22:24:32,821 - INFO - Date format standardized
+2025-01-02 22:24:32,822 - INFO - Cleaned amount column
+2025-01-02 22:24:32,822 - INFO - Cleaned inst_total column
+2025-01-02 22:24:32,822 - INFO - Cleaned inst_amount column
+2025-01-02 22:24:32,823 - INFO - Converted inst_num to numeric
+2025-01-02 22:24:32,823 - INFO - 
+=== Found 6 duplicate records ===
+2025-01-02 22:24:32,823 - INFO - 
+Duplicate set found:
+2025-01-02 22:24:32,823 - INFO - Date: 2024-01-20, Amount: 8800
+2025-01-02 22:24:32,824 - INFO - Description: コナミスポーツクラブ（会費）
+2025-01-02 22:24:32,824 - INFO - Description: コナミスポーツクラブ（会費）
+2025-01-02 22:24:32,824 - INFO - 
+Duplicate set found:
+2025-01-02 22:24:32,825 - INFO - Date: 2024-01-21, Amount: 5000
+2025-01-02 22:24:32,825 - INFO - Description: id Shopping Mall
+2025-01-02 22:24:32,825 - INFO - Description: id Shopping Mall
+2025-01-02 22:24:32,825 - INFO - 
+Duplicate set found:
+2025-01-02 22:24:32,825 - INFO - Date: 2024-01-25, Amount: 3000
+2025-01-02 22:24:32,825 - INFO - Description: スーパーマーケット
+2025-01-02 22:24:32,825 - INFO - Description: スーパーマーケット
+2025-01-02 22:24:32,826 - INFO - Keeping all duplicates for special condition: コナミスポーツクラブ（会費）
+2025-01-02 22:24:32,826 - INFO - Keeping all duplicates for special condition: コナミスポーツクラブ（会費）
+2025-01-02 22:24:32,826 - INFO - Keeping all duplicates for special condition: id Shopping Mall
+2025-01-02 22:24:32,826 - INFO - Keeping all duplicates for special condition: id Shopping Mall
+2025-01-02 22:24:32,827 - INFO - Removing duplicate: 2024-01-25 - スーパーマーケット
+2025-01-02 22:24:32,827 - INFO - 
+=== Removed records Content ===
+2025-01-02 22:24:32,828 - INFO - Number of records: 1
+2025-01-02 22:24:32,829 - INFO - Records content:
+   transaction_date  description  amount  inst_total  inst_num  inst_amount  memo
+10       2025-01-01  FUTURE SHOP    1500         0.0       0.0          0.0  テスト用
+2025-01-02 22:24:32,831 - INFO - Saved 1 removed records to /workspace/data/processed/removed_duplicates.csv
+2025-01-02 22:24:32,831 - INFO - 
+=== Duplicate processing summary ===
+2025-01-02 22:24:32,831 - INFO - Original records: 10
+2025-01-02 22:24:32,831 - INFO - Records after duplicate removal: 9
+2025-01-02 22:24:32,831 - INFO - Removed duplicates: 1
+2025-01-02 22:24:32,831 - INFO - Cleaned data shape: (9, 7)
+2025-01-02 22:24:32,832 - INFO - Successfully processed and saved: /workspace/data/processed/processed_test_card_data.csv
+2025-01-02 22:24:32,832 - INFO - CSV conversion process completed successfully
