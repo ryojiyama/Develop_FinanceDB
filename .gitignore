@@ -1,0 +1,92 @@
+# Python関連の除外
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# 仮想環境
+venv/
+ENV/
+.env
+
+# データファイル（機密情報を含むため）
+/data/csv/bank/*
+/data/csv/card/*
+/data/processed/*
+/data/temp/*
+!data/csv/bank/.gitkeep
+!data/csv/card/.gitkeep
+!data/processed/.gitkeep
+!data/temp/.gitkeep
+
+# ログファイル
+/logs/*
+!logs/.gitkeep
+
+# データベース関連
+*.sqlite3
+*.db
+
+# IDE設定
+.idea/
+.vscode/
+*.swp
+*.swo
+.project
+.pydevproject
+
+# macOS システムファイル
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+.Spotlight-V100
+.Trashes
+
+# Dockerの一時ファイル
+.docker/
+docker-compose.override.yml
+
+# 機密情報
+*.env
+*.pem
+*.key
+config.local.py
+
+# キャッシュファイル
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.nox/
+.coverage.*
+coverage.xml
+*.cover
+*.py,cover
+
+# 一時ファイル
+*.log
+*.tmp
+*.temp
+.*.swp
+*~
+
+# Keep empty directories
+!.gitkeep
