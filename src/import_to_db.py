@@ -136,8 +136,13 @@ class DatabaseImporter:
             for file in card_files:
                 df = pd.read_csv(file)
 
+                # 必要な列だけを抽出（分割払い情報は除外）
+                # CSVの列: transaction_date, description, amount, inst_total, inst_num, inst_amount, memo
+                # 必要な列: transaction_date, description, amount, memo
+                df_filtered = df[['transaction_date', 'description', 'amount', 'memo']].copy()
+
                 # データをステージングテーブルに挿入
-                data = [tuple(x) for x in df.values]
+                data = [tuple(x) for x in df_filtered.values]
                 execute_values(
                     self.cur,
                     """
