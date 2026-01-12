@@ -1,0 +1,12 @@
+{
+  "date_issues": [],
+  "amount_issues": [],
+  "description_issues": [],
+  "balance_issues": [],
+  "processed_files": {
+    "読み込んだ銀行ファイル": [],
+    "読み込んだカードファイル": []
+  },
+  "status": "ERROR",
+  "summary": "検証でエラーが検出されました"
+}

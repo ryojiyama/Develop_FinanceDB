@@ -49,8 +49,9 @@ class DatabaseImporter:
         except Exception as e:
             self.logger.error(f"Database connection failed: {str(e)}")
             raise
+
     def _check_validation_status(self) -> bool:
-        """最新の検証結果を確認（重複のみのエラーは許容）"""
+        """最新の検証結果を確認"""
         validation_files = list(PATHS['logs'].glob('validation_results_*.json'))
         if not validation_files:
             self.logger.error("No validation results found. Please run the cleansing script first.")
@@ -60,36 +61,9 @@ class DatabaseImporter:
         with open(latest_validation, 'r', encoding='utf-8') as f:
             results = json.load(f)
 
-        # status が OK ならそのまま通過
-        if results.get('status') == 'OK':
-            self.logger.info("Validation status: OK")
-            return True
-
-        # ERROR の場合、重大なエラーがあるかチェック
-        has_critical_errors = False
-
-        # 文字化け、金額異常、残高不整合は重大エラー
-        if results.get('description_issues'):
-            self.logger.error(f"Critical: Description issues found - {len(results['description_issues'])} issues")
-            has_critical_errors = True
-
-        if results.get('amount_issues'):
-            self.logger.error(f"Critical: Amount issues found - {len(results['amount_issues'])} issues")
-            has_critical_errors = True
-
-        if results.get('balance_issues'):
-            self.logger.error(f"Critical: Balance issues found - {len(results['balance_issues'])} issues")
-            has_critical_errors = True
-
-        # 重大エラーがあれば中止
-        if has_critical_errors:
-            self.logger.error("Validation failed with critical errors. Please fix the issues first.")
+        if results.get('status') != 'OK':
+            self.logger.error("Latest validation failed. Please check the validation results and fix any issues.")
             return False
-
-        # 日付関連の警告のみ（重複、ギャップ、未来日付）
-        if results.get('date_issues'):
-            self.logger.warning(f"Date issues detected (duplicates/gaps) - {len(results['date_issues'])} issues")
-            self.logger.warning("Proceeding with import as these are non-critical warnings")
 
         return True
 

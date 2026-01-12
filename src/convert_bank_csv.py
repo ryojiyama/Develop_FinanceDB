@@ -277,7 +277,7 @@ def process_bank_csv(input_dir: Path, output_dir: Path) -> None:
 
             if not cleaned_df.empty:
                 # 処理済みファイルを保存
-                output_file = output_dir / f'processed_{csv_file.name}'
+                output_file = output_dir / f'processed_bank_{csv_file.name}'
                 cleaned_df.to_csv(output_file, index=False, encoding='utf-8')
                 logger.info(f"Successfully processed and saved: {output_file}")
             else:

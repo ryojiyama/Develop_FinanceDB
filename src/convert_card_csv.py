@@ -285,7 +285,7 @@ def convert_card_csv_columns(input_dir: Path, output_dir: Path) -> None:
             logger.debug(f"Selected and renamed columns: {df.columns.tolist()}")
 
             # 処理済みファイルを保存
-            output_file = output_dir / f'processed_{csv_file.name}'
+            output_file = output_dir / f'processed_card_{csv_file.name}'
             df.to_csv(output_file, index=False, encoding='utf-8')
 
             logger.info(f"Successfully processed and saved: {output_file}")
